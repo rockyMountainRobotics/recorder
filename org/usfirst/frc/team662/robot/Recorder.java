@@ -64,6 +64,7 @@ public class Recorder {
 			}
 			SmartDashboard.putData("Autonomous choices", autoChooser);
 		}
+		pieces.sort((a, b) -> a.port - b.port);
 	}
 
 	public static void addRecordable(Supplier newGet, Consumer newSet, int port) {
@@ -103,10 +104,19 @@ public class Recorder {
 		if (SmartDashboard.getBoolean("play recording", false)) {
 			if (!hasLoaded) {
 				timers = loadSavedRecording();
-				hasLoaded = true;
-				playingTimer.stop();
-				playingTimer.reset();
-				playingTimer.start();
+				if (pieces.size() == timers.size()) {
+					for (int i = 0; i < pieces.size(); i++) {
+						if (pieces.get(i).port != timers.get(i).port) {
+							System.out.println("ERROR!!");
+						}
+					}
+					hasLoaded = true;
+					playingTimer.stop();
+					playingTimer.reset();
+					playingTimer.start();
+				} else {
+					System.out.println("ERROR!!");
+				}
 			}
 
 		}
@@ -114,18 +124,18 @@ public class Recorder {
 
 	ArrayList loadSavedRecording() {
 		//if a recording id found, load it
-		ArrayList deSerialized = new ArrayList();
+		ArrayList<Timings> deSerialized = new ArrayList<Timings>();
 
 		try {
 			FileInputStream fileIn = new FileInputStream((File) SmartDashboard.getData("Autonomous Choices"));
 			ObjectInputStream in = new ObjectInputStream(fileIn);
-			deSerialized = (ArrayList) in.readObject();
+			deSerialized = (ArrayList<Timings>) in.readObject();
 		} catch (IOException i) {
 			System.out.println(i);
 		} catch (ClassNotFoundException c) {
 			System.out.println(c);
 		}
-
+		deSerialized.sort((a, b) -> a.port - b.port);
 		return deSerialized;
 	}
 
@@ -144,6 +154,12 @@ public class Recorder {
 			fileOut.close();
 		} catch (IOException i) {
 			System.out.println(i);
+		}
+	}
+
+	public static void Play(ArrayList<Timings> input) {
+		for (int i = 0; i < input.size(); i++) {
+			pieces.get(input.get(i).port).setter.set(input.get(i).value);
 		}
 	}
 }
